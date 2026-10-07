@@ -1,0 +1,245 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  technician
+  manager
+  commercial
+}
+
+enum AssetStatus {
+  active
+  inactive
+  retired
+}
+
+enum CaseSeverity {
+  low
+  medium
+  high
+  critical
+}
+
+enum CaseStatus {
+  open
+  in_progress
+  blocked
+  closed
+}
+
+enum WorkOrderKind {
+  corrective
+  preventive
+  inspection
+}
+
+enum WorkOrderOutcome {
+  pending
+  resolved
+  escalated
+}
+
+enum DocumentType {
+  operator_manual
+  service_manual
+  parts_catalog
+  troubleshooting_guide
+  safety_bulletin
+  quick_guide
+  functional_safety_manual
+  system_manual
+  programming_manual
+  installation_manual
+  programming_guide
+  design_guide
+  operating_guide
+  firmware_manual
+  manual_index
+  operation_maintenance_manual
+  operation_maintenance_portal
+  service_access_policy
+}
+
+enum DocumentAccessLevel {
+  public_open
+  public_registration
+  partner_restricted
+  paid
+  subscription
+  mixed
+}
+
+enum DocumentIngestionStatus {
+  pending
+  downloaded
+  parsed
+  failed
+}
+
+model Customer {
+  id        String   @id
+  name      String
+  sector    String?
+  region    String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  assets Asset[]
+
+  @@map("customers")
+}
+
+model User {
+  id        String   @id
+  fullName  String   @map("full_name")
+  role      UserRole
+  region    String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  workOrders WorkOrder[]
+
+  @@map("users")
+}
+
+model Asset {
+  id              String      @id
+  serialNumber    String      @unique @map("serial_number")
+  model           String
+  status          AssetStatus
+  customerId      String      @map("customer_id")
+  machineModelId  String?     @map("machine_model_id")
+  location        String?
+  installedAt     DateTime?   @db.Date @map("installed_at")
+  warrantyEndDate DateTime?   @db.Date @map("warranty_end_date")
+  createdAt       DateTime    @default(now()) @map("created_at")
+
+  customer     Customer      @relation(fields: [customerId], references: [id])
+  machineModel MachineModel? @relation(fields: [machineModelId], references: [id])
+  cases        Case[]
+  workOrders   WorkOrder[]
+
+  @@index([customerId])
+  @@index([machineModelId])
+  @@map("assets")
+}
+
+model Case {
+  id         String       @id
+  assetId    String       @map("asset_id")
+  severity   CaseSeverity
+  status     CaseStatus
+  openedAt   DateTime     @map("opened_at")
+  closedAt   DateTime?    @map("closed_at")
+  rootCause  String?      @map("root_cause")
+  resolution String?
+  createdAt  DateTime     @default(now()) @map("created_at")
+
+  asset      Asset        @relation(fields: [assetId], references: [id])
+  workOrders WorkOrder[]
+
+  @@index([assetId])
+  @@index([status])
+  @@map("cases")
+}
+
+model WorkOrder {
+  id           String           @id
+  caseId       String?          @map("case_id")
+  assetId      String           @map("asset_id")
+  technicianId String?          @map("technician_id")
+  kind         WorkOrderKind
+  workedHours  Decimal?         @db.Decimal(6, 2) @map("worked_hours")
+  outcome      WorkOrderOutcome
+  createdAt    DateTime         @default(now()) @map("created_at")
+
+  case       Case?  @relation(fields: [caseId], references: [id])
+  asset      Asset  @relation(fields: [assetId], references: [id])
+  technician User?  @relation(fields: [technicianId], references: [id])
+
+  @@index([assetId])
+  @@map("work_orders")
+}
+
+model Manufacturer {
+  id          String   @id
+  name        String
+  websiteUrl  String?  @map("website_url")
+  countryCode String?  @map("country_code")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  machineModels MachineModel[]
+
+  @@map("manufacturers")
+}
+
+model MachineModel {
+  id             String   @id
+  manufacturerId String   @map("manufacturer_id")
+  code           String
+  name           String
+  family         String?
+  description    String?
+  releasedAt     DateTime? @db.Date @map("released_at")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  manufacturer Manufacturer       @relation(fields: [manufacturerId], references: [id])
+  assets       Asset[]
+  documents    TechnicalDocument[]
+
+  @@unique([manufacturerId, code])
+  @@index([manufacturerId])
+  @@map("machine_models")
+}
+
+model TechnicalDocument {
+  id              String              @id
+  machineModelId  String              @map("machine_model_id")
+  title           String
+  documentType    DocumentType        @map("document_type")
+  language        String              @default("es-ES")
+  sourceUrl       String              @map("source_url")
+  fileFormat      String              @default("pdf") @map("file_format")
+  revision        String?
+  publicationDate DateTime?           @db.Date @map("publication_date")
+  pageCount       Int?                @map("page_count")
+  accessLevel     DocumentAccessLevel @default(public_open) @map("access_level")
+  isOfficial      Boolean             @default(true) @map("is_official")
+  isActive        Boolean             @default(true) @map("is_active")
+  ingestionStatus DocumentIngestionStatus @default(pending) @map("ingestion_status")
+  localFilePath   String?             @map("local_file_path")
+  extractionMethod String?            @map("extraction_method")
+  extractedText   String?             @db.Text @map("extracted_text")
+  lastIngestedAt  DateTime?           @map("last_ingested_at")
+  ingestionError  String?             @db.Text @map("ingestion_error")
+  keywords        String[]            @default([])
+  createdAt       DateTime            @default(now()) @map("created_at")
+  updatedAt       DateTime            @updatedAt @map("updated_at")
+
+  machineModel MachineModel @relation(fields: [machineModelId], references: [id])
+  chunks      TechnicalDocumentChunk[]
+
+  @@index([machineModelId])
+  @@index([documentType])
+  @@index([language])
+  @@map("technical_documents")
+}
+
+model TechnicalDocumentChunk {
+  id                 String   @id
+  technicalDocumentId String   @map("technical_document_id")
+  chunkIndex         Int      @map("chunk_index")
+  content            String   @db.Text
+  charCount          Int      @map("char_count")
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  technicalDocument TechnicalDocument @relation(fields: [technicalDocumentId], references: [id], onDelete: Cascade)
+
+  @@unique([technicalDocumentId, chunkIndex])
+  @@index([technicalDocumentId])
+  @@map("technical_document_chunks")
+}

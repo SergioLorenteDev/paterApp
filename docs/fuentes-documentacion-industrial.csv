@@ -1,0 +1,6 @@
+fabricante,modelo_codigo,modelo_nombre,tipo_documento,titulo,url_fuente,acceso,idioma,situacion
+Siemens,SINAMICS-G120,Variador SINAMICS G120,operator_manual,SINAMICS G120 - Operating Instructions,https://support.industry.siemens.com/cs/document/109478699,public_open,en-US,pendiente_ingesta
+Siemens,SINAMICS-G120,Variador SINAMICS G120,quick_guide,SINAMICS G120 - Quick Start Guide,https://support.industry.siemens.com,public_open,en-US,pendiente_ingesta
+ABB,ACS880,Variador ABB ACS880,operator_manual,ACS880 Drives - Firmware Manual,https://library.abb.com,public_open,en-US,pendiente_ingesta
+Schneider Electric,ATV630,Altivar Process ATV630,operator_manual,Altivar Process ATV630 - Programming Manual,https://www.se.com/us/en/download/,public_open,en-US,pendiente_ingesta
+Danfoss,FC-302,VLT AutomationDrive FC 302,operator_manual,VLT AutomationDrive FC 302 - Design Guide,https://www.danfoss.com/en-us/products/dds/low-voltage-drives/vlt-drives/vlt-automationdrive-fc-301-fc-302/,public_open,en-US,pendiente_ingesta

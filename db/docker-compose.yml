@@ -1,0 +1,25 @@
+version: '3.9'
+services:
+  postgres:
+    image: postgres:16
+    container_name: paterapp-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: paterapp
+      POSTGRES_PASSWORD: paterapp
+      POSTGRES_DB: paterapp
+    ports:
+      - '5433:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init:/docker-entrypoint-initdb.d
+
+  redis:
+    image: redis:7
+    container_name: paterapp-redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+
+volumes:
+  postgres_data:

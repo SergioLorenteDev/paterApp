@@ -1,0 +1,66 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: paterapp-postgres-prod
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: paterapp
+      POSTGRES_PASSWORD: paterapp
+      POSTGRES_DB: paterapp
+    volumes:
+      - postgres_prod_data:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d
+
+  redis:
+    image: redis:7
+    container_name: paterapp-redis-prod
+    restart: unless-stopped
+
+  adminer:
+    image: adminer:4
+    container_name: paterapp-adminer-prod
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    ports:
+      - '8080:8080'
+
+  backend:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+    container_name: paterapp-backend-prod
+    restart: unless-stopped
+    environment:
+      PORT: 4000
+      CORS_ORIGIN: http://localhost:3000,http://localhost:3001
+      DATABASE_URL: postgresql://paterapp:paterapp@postgres:5432/paterapp?schema=public
+      AI_PROVIDER: ${AI_PROVIDER:-gemini}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-5-mini}
+    depends_on:
+      - postgres
+      - redis
+    ports:
+      - '4000:4000'
+
+  frontend:
+    build:
+      context: .
+      dockerfile: apps/frontend/Dockerfile
+    container_name: paterapp-frontend-prod
+    restart: unless-stopped
+    environment:
+      API_BASE_URL: http://backend:4000/api
+      API_TOKEN: dev-tecnico
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:4000/api
+      NEXT_PUBLIC_API_TOKEN: dev-tecnico
+    depends_on:
+      - backend
+    ports:
+      - '3001:3000'
+
+volumes:
+  postgres_prod_data:

@@ -1,0 +1,18 @@
+node_modules
+.pnpm-store
+.env
+.env.*
+!.env.example
+dist
+.next
+coverage
+.DS_Store
+*.tsbuildinfo
+pnpm-debug.log*
+
+# Runtime local de Node y utilidades de desarrollo (no son codigo fuente).
+.tools
+.shot-tmp
+
+# Documentos descargados por el pipeline de ingesta.
+apps/backend/storage
